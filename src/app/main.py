@@ -8,4 +8,5 @@ app = FastAPI(
 
 @app.get("/health", tags=["system"])
 async def health() -> dict[str, str]:
+    """Return service health status."""
     return {"status": "ok"}
