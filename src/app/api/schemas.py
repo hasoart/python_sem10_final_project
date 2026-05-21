@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from app.db.models import JSONValue, PhotoStatus
+from app.db.models import JSONValue, PhotoStatus, TaskStatus
 
 
 class UploadPhotoResponse(BaseModel):
@@ -26,3 +26,32 @@ class PhotoResponse(BaseModel):
     detections: list[dict[str, JSONValue]] | None
     created_at: datetime
     updated_at: datetime
+
+
+class TaskResponse(BaseModel):
+    id: uuid.UUID
+    status: TaskStatus
+    image_count: int
+    attempts: int
+    max_attempts: int
+    last_error: str | None
+    started_at: datetime | None
+    finished_at: datetime | None
+    photo_ids: list[uuid.UUID]
+    created_at: datetime
+    updated_at: datetime
+
+
+class TaskResultPhoto(BaseModel):
+    photo_id: uuid.UUID
+    original_filename: str
+    width: int | None
+    height: int | None
+    detections: list[dict[str, JSONValue]]
+    preview_url: str | None
+
+
+class TaskResultsResponse(BaseModel):
+    task_id: uuid.UUID
+    status: TaskStatus
+    photos: list[TaskResultPhoto]

@@ -14,6 +14,7 @@ from app.core.config import settings
 from app.core.storage import ensure_bucket_exists, get_s3_client
 from app.db.models import Photo, Task
 from app.db.session import get_db
+from app.worker.queue import enqueue_processing_task
 
 router = APIRouter(prefix="/photos", tags=["Photos"])
 
@@ -97,6 +98,8 @@ async def upload_photo(
     db.add(photo)
     db.commit()
 
+    enqueue_processing_task(task_id)
+
     return UploadPhotoResponse(task_id=task_id, photo_id=photo_id)
 
 
@@ -151,4 +154,30 @@ def get_photo_file(photo_id: uuid.UUID, db: Annotated[Session, Depends(get_db)])
         _iter_s3_body(response["Body"]),
         media_type=photo.mime_type,
         headers={"Content-Disposition": f'inline; filename="{photo.original_filename}"'},
+    )
+
+
+@router.get("/{photo_id}/preview")
+def get_photo_preview(photo_id: uuid.UUID, db: Annotated[Session, Depends(get_db)]) -> StreamingResponse:
+    """
+    Stream the annotated preview image from MinIO.
+
+    Raises:
+        HTTPException: If the photo or preview does not exist.
+    """
+    photo = db.get(Photo, photo_id)
+    if photo is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")
+    if photo.preview_storage_key is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Preview not found")
+
+    try:
+        response = get_s3_client().get_object(Bucket=settings.s3_bucket_name, Key=photo.preview_storage_key)
+    except ClientError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Stored preview not found") from exc
+
+    return StreamingResponse(
+        _iter_s3_body(response["Body"]),
+        media_type="image/jpeg",
+        headers={"Content-Disposition": f'inline; filename="preview-{photo.original_filename}"'},
     )
