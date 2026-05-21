@@ -55,3 +55,9 @@ class TaskResultsResponse(BaseModel):
     task_id: uuid.UUID
     status: TaskStatus
     photos: list[TaskResultPhoto]
+
+
+class RequeueTaskResponse(BaseModel):
+    task_id: uuid.UUID
+    status: TaskStatus
+    queued: bool

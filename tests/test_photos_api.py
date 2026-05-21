@@ -31,7 +31,7 @@ async def test_upload_photo_creates_task_photo_and_queue_message(
     photo = next(iter(fake_db.photos.values()))
     task = fake_db.tasks[task_id]
 
-    assert task.status == TaskStatus.PENDING
+    assert task.status == TaskStatus.QUEUED
     assert task.image_count == 1
     assert photo.task_id == task_id
     assert photo.original_filename == "sample.jpg"

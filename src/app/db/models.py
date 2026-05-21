@@ -13,6 +13,7 @@ type JSONValue = str | int | float | bool | list[JSONValue] | dict[str, JSONValu
 
 class TaskStatus(StrEnum):
     PENDING = "pending"
+    QUEUED = "queued"
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"

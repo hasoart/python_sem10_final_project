@@ -4,11 +4,14 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.schemas import TaskResponse, TaskResultPhoto, TaskResultsResponse
+from app.api.schemas import RequeueTaskResponse, TaskResponse, TaskResultPhoto, TaskResultsResponse
 from app.db.models import Task, TaskStatus
 from app.db.session import get_db
+from app.worker.queue import enqueue_processing_task
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
+
+REQUEUEABLE_STATUSES = {TaskStatus.PENDING, TaskStatus.NEEDS_RETRY}
 
 
 @router.get("/{task_id}")
@@ -70,3 +73,27 @@ def get_task_results(task_id: uuid.UUID, db: Annotated[Session, Depends(get_db)]
             for photo in task.photos
         ],
     )
+
+
+@router.post("/{task_id}/requeue")
+def requeue_task(task_id: uuid.UUID, db: Annotated[Session, Depends(get_db)]) -> RequeueTaskResponse:
+    """
+    Put a pending task back into the worker queue.
+
+    Raises:
+        HTTPException: If the task does not exist or cannot be requeued.
+    """
+    task = db.get(Task, task_id)
+    if task is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+    if task.status not in REQUEUEABLE_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Task cannot be requeued from status: {task.status}",
+        )
+
+    task.status = TaskStatus.QUEUED
+    db.commit()
+    enqueue_processing_task(task.id)
+
+    return RequeueTaskResponse(task_id=task.id, status=task.status, queued=True)

@@ -107,6 +107,8 @@ def process_task(task_id: str) -> None:
         task = db.get(Task, task_uuid)
         if task is None:
             return
+        if task.status not in {TaskStatus.QUEUED, TaskStatus.PROCESSING}:
+            return
 
         task.status = TaskStatus.PROCESSING
         task.started_at = task.started_at or _now()

@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.api.schemas import PhotoResponse, UploadPhotoResponse
 from app.core.config import settings
 from app.core.storage import ensure_bucket_exists, get_s3_client
-from app.db.models import Photo, Task
+from app.db.models import Photo, Task, TaskStatus
 from app.db.session import get_db
 from app.worker.queue import enqueue_processing_task
 
@@ -83,7 +83,7 @@ async def upload_photo(
             detail="Failed to upload image to storage",
         ) from exc
 
-    task = Task(id=task_id, image_count=1)
+    task = Task(id=task_id, status=TaskStatus.QUEUED, image_count=1)
     photo = Photo(
         id=photo_id,
         task_id=task_id,
