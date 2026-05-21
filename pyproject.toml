@@ -100,3 +100,10 @@ ignore = [
     "TD", # Allow todos
 ]
 exclude = ["*.ipynb"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "D",
+    "RUF029",
+    "S101",
+]
