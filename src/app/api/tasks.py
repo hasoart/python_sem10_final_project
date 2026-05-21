@@ -4,14 +4,32 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.schemas import RequeueTaskResponse, TaskResponse, TaskResultPhoto, TaskResultsResponse
+from app.api.schemas import (
+    CreateTaskRequest,
+    CreateTaskResponse,
+    RequeueTaskResponse,
+    TaskResponse,
+    TaskResultPhoto,
+    TaskResultsResponse,
+)
 from app.db.models import Task, TaskStatus
 from app.db.session import get_db
+from app.services.uploads import create_processing_task
 from app.worker.queue import enqueue_processing_task
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 REQUEUEABLE_STATUSES = {TaskStatus.PENDING, TaskStatus.NEEDS_RETRY}
+
+
+@router.post("", status_code=status.HTTP_201_CREATED)
+def create_task(
+    payload: CreateTaskRequest,
+    db: Annotated[Session, Depends(get_db)],
+) -> CreateTaskResponse:
+    """Create a processing task from already uploaded photos."""
+    created_task = create_processing_task(db, payload.photo_ids)
+    return CreateTaskResponse(task_id=created_task.task_id, photo_ids=created_task.photo_ids)
 
 
 @router.get("/{task_id}")

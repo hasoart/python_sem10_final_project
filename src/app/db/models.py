@@ -60,7 +60,7 @@ class Photo(Base):
     __tablename__ = "photos"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    task_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tasks.id", ondelete="CASCADE"), index=True)
+    task_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("tasks.id", ondelete="SET NULL"), index=True)
 
     original_filename: Mapped[str] = mapped_column(String(255))
     mime_type: Mapped[str] = mapped_column(String(100))
@@ -88,4 +88,4 @@ class Photo(Base):
         onupdate=func.now(),
     )
 
-    task: Mapped[Task] = relationship(back_populates="photos")
+    task: Mapped[Task | None] = relationship(back_populates="photos")

@@ -5,9 +5,82 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.orm.attributes import set_committed_value
 
-from app.api.tasks import get_task_results, requeue_task
+from app.api.schemas import CreateTaskRequest
+from app.api.tasks import create_task, get_task_results, requeue_task
 from app.db.models import Photo, Task, TaskStatus
 from tests.fakes import FakeDb
+
+
+def test_create_task_accepts_multiple_uploaded_photos(
+    fake_db: FakeDb,
+    queued_task_ids: list,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first_photo = Photo(
+        id=uuid.uuid4(),
+        task_id=None,
+        original_filename="first.jpg",
+        mime_type="image/jpeg",
+        size_bytes=100,
+        width=32,
+        height=24,
+        storage_key="photos/original/first.jpg",
+    )
+    second_photo = Photo(
+        id=uuid.uuid4(),
+        task_id=None,
+        original_filename="second.jpg",
+        mime_type="image/jpeg",
+        size_bytes=100,
+        width=32,
+        height=24,
+        storage_key="photos/original/second.jpg",
+    )
+    fake_db.add(first_photo)
+    fake_db.add(second_photo)
+    monkeypatch.setattr("app.services.uploads.enqueue_processing_task", queued_task_ids.append)
+
+    response = create_task(CreateTaskRequest(photo_ids=[first_photo.id, second_photo.id]), fake_db)
+
+    assert response.task_id
+    assert response.photo_ids == [first_photo.id, second_photo.id]
+    assert len(fake_db.tasks) == 1
+    assert len(fake_db.photos) == 2
+
+    task_id = queued_task_ids[0]
+    task = fake_db.tasks[task_id]
+    photos = list(fake_db.photos.values())
+
+    assert task.status == TaskStatus.QUEUED
+    assert task.image_count == 2
+    assert {photo.task_id for photo in photos} == {task_id}
+    assert {photo.original_filename for photo in photos} == {"first.jpg", "second.jpg"}
+
+
+def test_create_task_rejects_already_linked_photo(
+    fake_db: FakeDb,
+    queued_task_ids: list,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    photo = Photo(
+        id=uuid.uuid4(),
+        task_id=uuid.uuid4(),
+        original_filename="first.jpg",
+        mime_type="image/jpeg",
+        size_bytes=100,
+        width=32,
+        height=24,
+        storage_key="photos/original/first.jpg",
+    )
+    fake_db.add(photo)
+    monkeypatch.setattr("app.services.uploads.enqueue_processing_task", queued_task_ids.append)
+
+    with pytest.raises(HTTPException) as exc_info:
+        create_task(CreateTaskRequest(photo_ids=[photo.id]), fake_db)
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == f"Photo already linked to task: {photo.id}"
+    assert queued_task_ids == []
 
 
 def test_get_task_results_returns_202_for_pending_task(fake_db: FakeDb) -> None:

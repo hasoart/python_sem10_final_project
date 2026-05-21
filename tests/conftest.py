@@ -39,9 +39,9 @@ async def client(
 
     app.dependency_overrides[get_db] = override_get_db
 
-    monkeypatch.setattr("app.api.photos.ensure_bucket_exists", lambda: None)
-    monkeypatch.setattr("app.api.photos.get_s3_client", lambda: fake_s3)
-    monkeypatch.setattr("app.api.photos.enqueue_processing_task", queued_task_ids.append)
+    monkeypatch.setattr("app.services.uploads.ensure_bucket_exists", lambda: None)
+    monkeypatch.setattr("app.services.uploads.get_s3_client", lambda: fake_s3)
+    monkeypatch.setattr("app.services.uploads.enqueue_processing_task", queued_task_ids.append)
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as async_client:

@@ -13,7 +13,7 @@ app.include_router(photos_router)
 app.include_router(tasks_router)
 
 
-@app.get("/health", tags=["system"])
+@app.get("/health", tags=["System"])
 async def health() -> dict[str, str]:
     """Return service health status."""
     return {"status": "ok"}

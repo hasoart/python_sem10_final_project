@@ -5,12 +5,11 @@ from httpx import AsyncClient
 
 from app.api.photos import get_photo
 from app.core.config import settings
-from app.db.models import TaskStatus
 from tests.fakes import FakeDb, FakeS3Client
 
 
 @pytest.mark.asyncio
-async def test_upload_photo_creates_task_photo_and_queue_message(
+async def test_upload_photo_creates_photo_without_processing_task(
     client: AsyncClient,
     fake_db: FakeDb,
     fake_s3: FakeS3Client,
@@ -24,16 +23,13 @@ async def test_upload_photo_creates_task_photo_and_queue_message(
 
     assert response.status_code == 201
     data = response.json()
-    assert data["task_id"]
     assert data["photo_id"]
 
-    task_id = queued_task_ids[0]
     photo = next(iter(fake_db.photos.values()))
-    task = fake_db.tasks[task_id]
 
-    assert task.status == TaskStatus.QUEUED
-    assert task.image_count == 1
-    assert photo.task_id == task_id
+    assert fake_db.tasks == {}
+    assert queued_task_ids == []
+    assert photo.task_id is None
     assert photo.original_filename == "sample.jpg"
     assert photo.width == 32
     assert photo.height == 24

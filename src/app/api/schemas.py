@@ -7,13 +7,21 @@ from app.db.models import JSONValue, PhotoStatus, TaskStatus
 
 
 class UploadPhotoResponse(BaseModel):
-    task_id: uuid.UUID
     photo_id: uuid.UUID
+
+
+class CreateTaskResponse(BaseModel):
+    task_id: uuid.UUID
+    photo_ids: list[uuid.UUID]
+
+
+class CreateTaskRequest(BaseModel):
+    photo_ids: list[uuid.UUID]
 
 
 class PhotoResponse(BaseModel):
     id: uuid.UUID
-    task_id: uuid.UUID
+    task_id: uuid.UUID | None
     original_filename: str
     mime_type: str
     size_bytes: int

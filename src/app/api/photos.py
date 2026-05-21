@@ -1,20 +1,18 @@
 import uuid
 from collections.abc import Iterator
-from io import BytesIO
 from typing import Annotated, Protocol
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
-from PIL import Image, UnidentifiedImageError
 from sqlalchemy.orm import Session
 
 from app.api.schemas import PhotoResponse, UploadPhotoResponse
 from app.core.config import settings
-from app.core.storage import ensure_bucket_exists, get_s3_client
-from app.db.models import Photo, Task, TaskStatus
+from app.core.storage import get_s3_client
+from app.db.models import Photo
 from app.db.session import get_db
-from app.worker.queue import enqueue_processing_task
+from app.services.uploads import upload_photo as upload_photo_service
 
 router = APIRouter(prefix="/photos", tags=["Photos"])
 
@@ -29,11 +27,6 @@ class S3Body(Protocol):
         ...
 
 
-def _build_storage_key(task_id: uuid.UUID, photo_id: uuid.UUID, filename: str) -> str:
-    safe_filename = filename.rsplit("/", maxsplit=1)[-1].rsplit("\\", maxsplit=1)[-1]
-    return f"photos/original/{task_id}/{photo_id}/{safe_filename}"
-
-
 def _iter_s3_body(body: S3Body) -> Iterator[bytes]:
     try:
         yield from body.iter_chunks()
@@ -46,61 +39,9 @@ async def upload_photo(
     file: Annotated[UploadFile, File()],
     db: Annotated[Session, Depends(get_db)],
 ) -> UploadPhotoResponse:
-    """
-    Upload one image, store it in MinIO, and create a processing task.
-
-    Raises:
-        HTTPException: If the file is invalid or storage upload fails.
-    """
-    if file.content_type is None or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File must be an image")
-
-    content = await file.read()
-    if not content:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is empty")
-
-    try:
-        image = Image.open(BytesIO(content))
-        width, height = image.size
-    except UnidentifiedImageError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image file") from exc
-
-    task_id = uuid.uuid4()
-    photo_id = uuid.uuid4()
-    storage_key = _build_storage_key(task_id, photo_id, file.filename or "image")
-
-    try:
-        ensure_bucket_exists()
-        get_s3_client().put_object(
-            Bucket=settings.s3_bucket_name,
-            Key=storage_key,
-            Body=content,
-            ContentType=file.content_type,
-        )
-    except ClientError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Failed to upload image to storage",
-        ) from exc
-
-    task = Task(id=task_id, status=TaskStatus.QUEUED, image_count=1)
-    photo = Photo(
-        id=photo_id,
-        task_id=task_id,
-        original_filename=file.filename or "image",
-        mime_type=file.content_type,
-        size_bytes=len(content),
-        width=width,
-        height=height,
-        storage_key=storage_key,
-    )
-    db.add(task)
-    db.add(photo)
-    db.commit()
-
-    enqueue_processing_task(task_id)
-
-    return UploadPhotoResponse(task_id=task_id, photo_id=photo_id)
+    """Upload one image to MinIO without starting processing."""
+    photo = await upload_photo_service(db, file)
+    return UploadPhotoResponse(photo_id=photo.id)
 
 
 @router.get("/{photo_id}")
