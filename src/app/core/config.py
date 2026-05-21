@@ -15,6 +15,9 @@ class Settings(BaseSettings):
 
     redis_url: str = "redis://localhost:6379/0"
 
+    celery_app_name: str = "object_detection_service"
+    celery_timezone: str = "UTC"
+
     s3_endpoint_url: str = "http://localhost:9000"
     s3_access_key_id: str = Field(default="minioadmin")
     s3_secret_access_key: str = Field(default="minioadmin")
