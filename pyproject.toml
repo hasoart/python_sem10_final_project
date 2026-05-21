@@ -19,10 +19,14 @@ dependencies = [
     "pydantic-settings>=2.14.1",
     "python-multipart>=0.0.21",
     "sqlalchemy>=2.0.45",
+    "uvicorn[standard]>=0.38.0",
+]
+
+[project.optional-dependencies]
+worker = [
     "torch>=2.9.0",
     "torchvision>=0.24.0",
     "ultralytics>=8.3.235",
-    "uvicorn[standard]>=0.38.0",
 ]
 
 [build-system]

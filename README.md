@@ -41,6 +41,11 @@ Compose поднимет:
 
 При первом запуске worker может скачать веса YOLO, если файла из `YOLO_MODEL_PATH` еще нет в контейнере.
 
+Для контейнеров используются два Dockerfile:
+
+- `Dockerfile.api` - легкий образ для API и миграций, без `torch` и `ultralytics`;
+- `Dockerfile.worker` - образ worker с ML-зависимостями и системными библиотеками для OpenCV.
+
 Swagger UI:
 
 ```text
@@ -85,8 +90,10 @@ uv run uvicorn app.main:app --reload
 Worker:
 
 ```bash
-uv run celery -A app.worker.celery_app:celery_app worker --loglevel=info
+uv run --extra worker celery -A app.worker.celery_app:celery_app worker --loglevel=info
 ```
+
+Без `--extra worker` локально ставятся только зависимости API. Тяжелые ML-зависимости (`torch`, `ultralytics`) нужны только worker.
 
 ## Как пользоваться API
 
