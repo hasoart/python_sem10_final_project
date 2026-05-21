@@ -1,0 +1,68 @@
+[project]
+name = "python-sem10-final-project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.136.1",
+    "pydantic>=2.13.4",
+    "pydantic-settings>=2.14.1",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.13",
+]
+
+[tool.ruff]
+# Ruff config: https://docs.astral.sh/ruff/settings
+preview = true
+fix = false
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "A005", # allow to shadow stdlib and builtin module names
+    "ANN002", # Annotation for args
+    "ANN003", # Annotation for kwargs
+    "ANN204", # Return type annotation for spectial method
+    "COM812", # trailing comma, conflicts with `ruff format`
+    "CPY001", # Copyright for each file is overkill for now
+    # Different doc rules that we don't really care about:
+    "D100", # Checks for undocumented public module definitions
+    "D101",
+    "D104", # Checks for undocumented public package definitions
+    "D200", # Checks for single-line docstrings that are broken across multiple lines
+    "D202", # Checks for docstrings on functions that are separated by one or more blank lines from the function body
+    "D212", # Checks for docstring summary lines that are not positioned on the first physical line of the docstring
+    "D401", # Checks for docstring first lines that are not in an imperative mood
+    # Checks for docstrings in which the first line does not end in a punctuation mark,
+    # such as a period, question mark, or exclamation point.
+    "D413",
+    "D415",
+    "DOC201", # Checks for functions with return statements that do not have "Returns" sections in their docstrings
+    "EM101", # Allow string literals in exception constructor calls
+    "EM102", # Allow f-strings in exception constructor calls
+    "FBT",
+    "INP001", # implicit namespace package
+    "ISC001", # implicit string concat conflicts with `ruff format`
+    "ISC003", # prefer explicit string concat over implicit concat
+    "PLR09", # we have our own complexity rules
+    "PLR2004", # do not report magic numbers
+    "PLR6301", # do not require classmethod / staticmethod when self not used
+    "PTH123",
+    "TRY003", # long exception messages from `tryceratops`
+    "RUF001", # Allow cyrillic symbol in strings
+    "RUF002", # Allow cyrillic symbol in docstring
+    "RUF003", # Allow cyrillic symbol in comments
+    "FIX", # Allow fixmes
+    "TD", # Allow todos
+]
+exclude = ["*.ipynb"]
