@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Object Detection Preview</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <h1>Object Detection Preview</h1>
+
+      <section class="panel">
+        <h2>1. Загрузка фотографий</h2>
+        <form id="upload-form">
+          <input id="photo-input" type="file" accept="image/*" multiple />
+          <button type="submit">Загрузить</button>
+        </form>
+        <p id="upload-status"></p>
+      </section>
+
+      <section class="layout">
+        <div class="panel">
+          <h2>Загруженные photo_id</h2>
+          <textarea id="photo-ids" rows="10" readonly></textarea>
+          <div class="actions">
+            <button id="clear-photos" type="button">Очистить список</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>2. Создание task</h2>
+          <button id="create-task" type="button">Отправить все на обработку</button>
+          <p>Task ID:</p>
+          <input id="task-id" type="text" readonly />
+          <div class="actions">
+            <button id="open-results" type="button" disabled>Открыть результаты</button>
+          </div>
+          <pre id="task-response"></pre>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

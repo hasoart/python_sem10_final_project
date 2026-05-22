@@ -97,6 +97,18 @@ uv run --extra worker celery -A app.worker.celery_app:celery_app worker --loglev
 
 ## Как пользоваться API
 
+Есть простая HTML-демонстрация в папке `preview`:
+
+```bash
+python -m http.server 8080 --directory preview
+```
+
+Открыть:
+
+```text
+http://localhost:8080
+```
+
 1. Загрузить фотографию:
 
 ```bash
@@ -167,12 +179,8 @@ GET /photos/{photo_id}/preview
 uv run pytest
 ```
 
-Подробнее: [docs/testing.md](docs/testing.md).
-
 ## Миграции
 
 ```bash
 uv run alembic upgrade head
 ```
-
-Подробнее: [docs/migrations.md](docs/migrations.md).

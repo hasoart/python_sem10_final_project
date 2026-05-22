@@ -9,6 +9,7 @@ class Settings(BaseSettings):
 
     app_name: str = "Object Detection Service"
     debug: bool = False
+    cors_allow_origins: list[str] = ["*"]
 
     database_url: str = "postgresql+psycopg://app:app@localhost:5432/object_detection"
     database_echo: bool = False

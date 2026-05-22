@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Detection Results</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <h1>Detection Results</h1>
+
+      <section class="panel">
+        <label for="task-id">Task ID</label>
+        <input id="task-id" type="text" />
+        <button id="load-results" type="button">Загрузить результаты</button>
+        <a href="./index.html">Назад к загрузке</a>
+        <p id="status"></p>
+      </section>
+
+      <section class="layout">
+        <div class="panel">
+          <h2>Raw JSON</h2>
+          <pre id="raw-json"></pre>
+        </div>
+
+        <div class="panel">
+          <h2>Preview</h2>
+          <div id="previews" class="previews"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./results.js"></script>
+  </body>
+</html>
